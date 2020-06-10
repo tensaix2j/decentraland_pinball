@@ -43,6 +43,8 @@ export class Txpinball extends Entity {
 
 	
 	public sensors = {};
+	public lights  = {};
+	public boardstates = {};
 
 
 	constructor(
@@ -98,6 +100,7 @@ export class Txpinball extends Entity {
 
 		this.construct_box2d_shapes();
 		this.place_box2d_sensors();
+		this.place_lights()
 
 		this.ball_box2dbody = this.createDynamicCircle(  
     				1.66 ,  
@@ -176,6 +179,8 @@ export class Txpinball extends Entity {
 		contactListener.EndContact = function (contact) {
 		  	
 			if ( contact.GetFixtureA().GetBody().GetUserData() != null ) {
+
+
 				if ( contact.GetFixtureA().GetBody().GetUserData()  == "at_tbonus" || 
 		  			 contact.GetFixtureA().GetBody().GetUserData()  == "at_cbonus" ||
 		  			 contact.GetFixtureA().GetBody().GetUserData()  == "at_lock"  ) {
@@ -201,6 +206,8 @@ export class Txpinball extends Entity {
 		  				}
 		  			}
 					
+				} else {
+					_this.toggleButton( contact.GetFixtureA().GetBody().GetUserData()  );
 				}
 	  	
 		  	}
@@ -217,8 +224,6 @@ export class Txpinball extends Entity {
 		}
 		this.world.SetContactListener(contactListener);	
 
-
-		let kkk = new Txlight( this , 0 , 4,  0.15 );
 
 		
 
@@ -253,13 +258,19 @@ export class Txpinball extends Entity {
 
 			//this.ball_box2dbody.SetType( b2BodyType.b2_staticBody );
 			//this.ball_box2dbody.SetAwake( true );
-					
+			
+			this.toggleButton("eb_doublescore_0");
+			this.toggleButton("eb_doublescore_2");
+
 
 
 				
     	} else if ( e.buttonId == 2 ) {
 
     		this.jointR.EnableMotor(true);
+
+    		this.toggleButton("eb_doublescore_1");
+
     	
     		//this.ball_box2dbody.SetType( b2BodyType.b2_dynamicBody );
 			//this.ball_box2dbody.SetAwake( true );
@@ -267,6 +278,25 @@ export class Txpinball extends Entity {
     		
     	}
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //----
     public global_input_up(e) {
     	if ( e.buttonId == 0 ) {
@@ -521,6 +551,141 @@ export class Txpinball extends Entity {
 
 
 
+
+
+
+
+	public eb_tog_has_categories 		= ["tbonus" , "extraball"  , "lock" , "cbonus" ,"doublescore"  ];
+	public eb_tog_has_ebcount    		= [        3,    		3  ,      3 ,       4              3 ] ;
+	public eb_completion_prefix 		= [ "has"   , "hastrig"    , "has"  ,   "has"         "has"       ];
+
+
+	//----------
+	public toggleButton( buttonName ) {
+
+		let h , i  ;
+
+		for ( h = 0 ; h < this.eb_tog_has_categories.length ; h++ ) {
+
+			let category = this.eb_tog_has_categories[h];
+			let completion_prefix = this.eb_completion_prefix[h];
+
+			if ( buttonName.substring(0,  ("eb_" + category ).length ) == "eb_" + category  ) {
+			
+				if ( this.boardstates[buttonName] != 1 ) {
+					this.boardstates[buttonName] = 1;
+					let lightname = buttonName.replace("eb","tog");
+					this.lights[lightname].material.emissiveIntensity = 4.0;
+
+					let litcount = 0;
+					for ( i = 0 ; i < 3 ; i++ ) {
+						if ( this.boardstates["eb_" + category + "_" + i ] == 1 ) {
+							litcount += 1
+						} else {
+							break;
+						}	
+					}
+
+					if ( litcount == 3 ) {
+						// all 3 eb_tbonus buttons are lit.
+						this.boardstates[ completion_prefix + "_" + category ] = 1;
+						this.lights[ completion_prefix + "_" + category ].material.emissiveIntensity = 4.0;
+
+						for ( i = 0 ; i < 3 ; i++ ) {
+							this.boardstates["eb_" + category +"_" + i ] = 0;
+							this.lights["tog_" + category + "_" + i ].material.emissiveIntensity = 0.0;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+
+
+
+
+	///-------------
+	public place_lights() {
+
+		this.lights["has_lock"] = new Txlight( this , -0.935009 , 5.620511,  0.10 )
+		this.lights["tog_doublescore_0"] = new Txlight( this , 0.120712 , 5.4428659999999995,  0.10 )
+		this.lights["tog_doublescore_1"] = new Txlight( this , 0.460777 , 5.361656,  0.10 )
+		this.lights["tog_doublescore_2"] = new Txlight( this , 0.79069 , 5.270296,  0.10 )
+
+		this.lights["tog_doublescore_0"].material.emissiveColor = Color3.Red();
+		this.lights["tog_doublescore_1"].material.emissiveColor = Color3.Red();
+		this.lights["tog_doublescore_2"].material.emissiveColor = Color3.Red();
+
+
+		this.lights["hastrig_extraball"] = new Txlight( this , 1.22287 , 4.803342,  0.25 )
+		this.lights["hastrig_extraball"].material.emissiveColor = Color3.Red();
+
+
+		this.lights["hastrig_jackpot"] = new Txlight( this , -1.12287 , 3.913342,  0.25 )
+		this.lights["hastrig_jackpot"].material.emissiveColor = Color3.Purple();
+				
+
+		this.lights["mul_cbonus_0"] = new Txlight( this , 1.126693 , 3.627837,  0.10 )
+		this.lights["mul_cbonus_1"] = new Txlight( this , 1.126693 , 3.4457269999999998,  0.10 )
+		this.lights["mul_cbonus_2"] = new Txlight( this , 1.126693 , 3.263616,  0.10 )
+		this.lights["mul_cbonus_3"] = new Txlight( this , 1.126693 , 3.0873809999999997,  0.10 )
+		this.lights["has_cbonus"] = new Txlight( this , -1.419221 , 3.0812899999999996,  0.10 )
+		this.lights["has_tbonus"] = new Txlight( this , 1.0730950000000001 , 3.8706449999999997,  0.10 )
+		
+
+		this.lights["has_extraball"] = new Txlight( this , 0.286176 , 1.605723,  0.10 )
+		this.lights["has_doublescore"] = new Txlight( this , 0.49326 , 2.0625259999999996,  0.10 )
+		
+		this.lights["has_extraball"].material.emissiveColor = Color3.Red();
+		this.lights["has_doublescore"].material.emissiveColor = Color3.Red();
+		
+		
+
+
+		this.lights["has_leftinnerdrain"] = new Txlight( this , 1.017061 , 2.2696099999999997,  0.10 )
+		this.lights["has_rightouterdrain"] = new Txlight( this , 1.309415 , 1.8432600000000001,  0.10 )
+		this.lights["has_rightinnerdrain"] = new Txlight( this , -1.425311 , 2.2635189999999996,  0.10 )
+		this.lights["has_leftouterdrain"] = new Txlight( this , -1.735937 , 1.83717,  0.10 )
+		
+		this.lights["tog_extraball_0"] = new Txlight( this , -1.030662 , 5.334519,  0.10 )
+		this.lights["tog_extraball_1"] = new Txlight( this , -0.9460689999999999 , 5.161808,  0.10 )
+		this.lights["tog_extraball_2"] = new Txlight( this , -0.8614759999999999 , 4.974998,  0.10 )
+		
+		this.lights["tog_lock_0"] = new Txlight( this , -0.8086049999999999 , 4.6472,  0.10 )
+		this.lights["tog_lock_1"] = new Txlight( this , -0.8050799999999999 , 4.463915,  0.10 )
+		this.lights["tog_lock_2"] = new Txlight( this , -0.8086049999999999 , 4.27358,  0.10 )
+		
+		this.lights["tog_tbonus_0"] = new Txlight( this , -1.23157 , 3.385353,  0.10 )
+		this.lights["tog_tbonus_1"] = new Txlight( this , -1.070843 , 3.457257,  0.10 )
+		this.lights["tog_tbonus_2"] = new Txlight( this , -0.880509 , 3.5249319999999997,  0.10 )
+
+		this.lights["tog_cbonus_0"] = new Txlight( this , 1.33583 , 3.613755,  0.10 )
+		this.lights["tog_cbonus_1"] = new Txlight( this , 1.34006 , 3.448798,  0.10 )
+		this.lights["tog_cbonus_2"] = new Txlight( this , 1.34006 , 3.271152,  0.10 )
+		this.lights["tog_cbonus_3"] = new Txlight( this , 1.344289 , 3.097737,  0.10 )
+
+		this.lights["mul_magic_0"] = new Txlight( this , -0.683464 , 3.18344,  0.20 )
+		this.lights["mul_magic_1"] = new Txlight( this , -0.399581 , 3.4500139999999997,  0.20 )
+		this.lights["mul_magic_2"] = new Txlight( this , -0.03529999999999998 , 3.553102,  0.20 )
+		this.lights["mul_magic_3"] = new Txlight( this , 0.29974500000000002 , 3.458088,  0.20 )
+		this.lights["mul_magic_4"] = new Txlight( this , 0.561701 , 3.1861309999999996,  0.20 )
+		
+
+		this.lights["mul_lane_0"] = new Txlight( this , -0.6712819999999999 , 1.485127,  0.10 )
+		this.lights["mul_lane_1"] = new Txlight( this , -0.744371 , 1.68612,  0.10 )
+		this.lights["mul_lane_2"] = new Txlight( this , -0.8296399999999999 , 1.874932,  0.10 )
+		this.lights["mul_lane_3"] = new Txlight( this , -0.890547 , 2.063744,  0.10 )
+		this.lights["mul_lane_4"] = new Txlight( this , -0.9758169999999999 , 2.2464649999999997,  0.10 )
+		this.lights["mul_lane_5"] = new Txlight( this , -1.073269 , 2.4596389999999997,  0.10 )
+		this.lights["mul_lane_6"] = new Txlight( this , -1.151994 , 2.6484509999999997,  0.10 )
+
+
+
+
+
+	}
 
 
 
