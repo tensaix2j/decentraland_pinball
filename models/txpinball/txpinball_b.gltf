@@ -1,0 +1,241 @@
+{
+    "asset" : {
+        "copyright" : "tensaix2j",
+        "generator" : "Khronos glTF Blender I/O v1.1.45",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0,
+                1
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "main",
+            "scale" : [
+                0.5788625478744507,
+                0.09013770520687103,
+                0.5796031355857849
+            ],
+            "translation" : [
+                -1.4255306720733643,
+                1.743044376373291,
+                -0.40528053045272827
+            ]
+        },
+        {
+            "mesh" : 1,
+            "name" : "mainback",
+            "rotation" : [
+                0,
+                0,
+                0,
+                -1
+            ],
+            "scale" : [
+                1.9829272031784058,
+                0.6061438918113708,
+                2.9939985275268555
+            ],
+            "translation" : [
+                -0.003474488854408264,
+                1.060882329940796,
+                -3.02143931388855
+            ]
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "Material.001",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.9999842643737793,
+                    0.4798727035522461,
+                    0.06618259102106094,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "Board",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.3423832356929779,
+                    0.19663572311401367,
+                    0.10494879633188248,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Cube",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3,
+                    "material" : 0
+                }
+            ]
+        },
+        {
+            "name" : "Cube.001",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 4,
+                        "NORMAL" : 5,
+                        "TEXCOORD_0" : 6
+                    },
+                    "indices" : 7,
+                    "material" : 1
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 1931,
+            "max" : [
+                5.935822486877441,
+                1,
+                0.6384871006011963
+            ],
+            "min" : [
+                -1.0117992162704468,
+                -1.0000001192092896,
+                -9.677515029907227
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 1931,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 1931,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 2256,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5126,
+            "count" : 50,
+            "max" : [
+                1.0055559873580933,
+                1,
+                1
+            ],
+            "min" : [
+                -1.0078710317611694,
+                -1.1922932863235474,
+                -1
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 50,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 50,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5123,
+            "count" : 60,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 23172,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 23172,
+            "byteOffset" : 23172
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 15448,
+            "byteOffset" : 46344
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4512,
+            "byteOffset" : 61792
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 600,
+            "byteOffset" : 66304
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 600,
+            "byteOffset" : 66904
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 400,
+            "byteOffset" : 67504
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 120,
+            "byteOffset" : 67904
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 68024,
+            "uri" : "txpinball_b.bin"
+        }
+    ]
+}
