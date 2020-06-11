@@ -35,11 +35,19 @@ export class Txlight extends Entity {
 		this.material.transparencyMode = 1;
 		this.material.emissiveColor = Color3.Yellow();
 		this.material.emissiveIntensity = 0.0;
-		
+
 		this.addComponent( this.shape );
 		this.addComponent( this.transform );
 		this.addComponent( this.material );
 
+	}
+
+	turn_on () {
+		this.material.emissiveIntensity = 4.0;
+	}
+
+	turn_off(){
+		this.material.emissiveIntensity = 0.0;
 	}
 
 }
