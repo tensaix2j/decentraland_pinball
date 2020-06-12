@@ -98,6 +98,23 @@
                 "metallicFactor" : 0,
                 "roughnessFactor" : 0.5
             }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "mana logo",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 1,
+                    "texCoord" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
         }
     ],
     "meshes" : [
@@ -135,6 +152,15 @@
                     },
                     "indices" : 11,
                     "material" : 2
+                },
+                {
+                    "attributes" : {
+                        "POSITION" : 12,
+                        "NORMAL" : 13,
+                        "TEXCOORD_0" : 14
+                    },
+                    "indices" : 15,
+                    "material" : 3
                 }
             ]
         }
@@ -142,6 +168,9 @@
     "textures" : [
         {
             "source" : 0
+        },
+        {
+            "source" : 1
         }
     ],
     "images" : [
@@ -149,6 +178,11 @@
             "mimeType" : "image/png",
             "name" : "backboard_texture",
             "uri" : "backboard_texture.png"
+        },
+        {
+            "mimeType" : "image/png",
+            "name" : "mana_logo",
+            "uri" : "mana_logo.png"
         }
     ],
     "accessors" : [
@@ -189,7 +223,7 @@
         {
             "bufferView" : 4,
             "componentType" : 5126,
-            "count" : 777,
+            "count" : 606,
             "max" : [
                 5.935822486877441,
                 9.677515029907227,
@@ -205,19 +239,19 @@
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 777,
+            "count" : 606,
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 777,
+            "count" : 606,
             "type" : "VEC2"
         },
         {
             "bufferView" : 7,
             "componentType" : 5123,
-            "count" : 1344,
+            "count" : 1056,
             "type" : "SCALAR"
         },
         {
@@ -253,6 +287,40 @@
             "componentType" : 5123,
             "count" : 912,
             "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 12,
+            "componentType" : 5126,
+            "count" : 192,
+            "max" : [
+                4.024449348449707,
+                7.786911487579346,
+                0.3232809901237488
+            ],
+            "min" : [
+                1.5266779661178589,
+                5.953869819641113,
+                0.32328030467033386
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 13,
+            "componentType" : 5126,
+            "count" : 192,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 14,
+            "componentType" : 5126,
+            "count" : 192,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 15,
+            "componentType" : 5123,
+            "count" : 288,
+            "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
@@ -278,48 +346,68 @@
         },
         {
             "buffer" : 0,
-            "byteLength" : 9324,
+            "byteLength" : 7272,
             "byteOffset" : 1400
         },
         {
             "buffer" : 0,
-            "byteLength" : 9324,
-            "byteOffset" : 10724
+            "byteLength" : 7272,
+            "byteOffset" : 8672
         },
         {
             "buffer" : 0,
-            "byteLength" : 6216,
-            "byteOffset" : 20048
+            "byteLength" : 4848,
+            "byteOffset" : 15944
         },
         {
             "buffer" : 0,
-            "byteLength" : 2688,
-            "byteOffset" : 26264
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 7296,
-            "byteOffset" : 28952
+            "byteLength" : 2112,
+            "byteOffset" : 20792
         },
         {
             "buffer" : 0,
             "byteLength" : 7296,
-            "byteOffset" : 36248
+            "byteOffset" : 22904
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 7296,
+            "byteOffset" : 30200
         },
         {
             "buffer" : 0,
             "byteLength" : 4864,
-            "byteOffset" : 43544
+            "byteOffset" : 37496
         },
         {
             "buffer" : 0,
             "byteLength" : 1824,
-            "byteOffset" : 48408
+            "byteOffset" : 42360
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2304,
+            "byteOffset" : 44184
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 2304,
+            "byteOffset" : 46488
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1536,
+            "byteOffset" : 48792
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 576,
+            "byteOffset" : 50328
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 50232,
+            "byteLength" : 50904,
             "uri" : "txpinball.bin"
         }
     ]

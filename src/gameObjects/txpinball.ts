@@ -16,6 +16,9 @@ import {b2ContactListener} from "src/Box2D/Dynamics/b2WorldCallbacks"
 
 import {Txbox} from "src/gameObjects/txbox" 
 import {Txlight} from "src/gameObjects/txlight"
+import {Txball} from "src/gameObjects/txball"
+import {Txsound} from "src/gameObjects/txsound"
+
 
 export class Txpinball extends Entity {
 
@@ -23,9 +26,6 @@ export class Txpinball extends Entity {
 	public transform:Transform;
 	public userID:string;
 	public world;
-
-	public ball_box2dbody;
-	public ball_transform;
 
 	public jointL;
 	public jointR;
@@ -38,20 +38,36 @@ export class Txpinball extends Entity {
 	public flipper_boxL;
 	public flipper_boxR;
 
-	public sticker = "";
-	public stickerCountdown = 0;
 
-	
 	public sensors = {};
 	public lights  = {};
 	public boardstates = {};
 
-	public ball_start_x = 1.66;
-	public ball_start_y = 1.23;
-	
-	//public ball_start_x = 1.34;
-	//public ball_start_y = 1.71;
-	
+	// 1.66 , 1.23 is normal starting 
+
+
+	public ball_start_x = [  1.66, 1.66 ];
+	public ball_start_y = [  1.23, 1.23 ];
+	public balls 		= [];
+
+	public callback_queue = [];
+
+	public sndFlipper;
+	public sndLaunch;
+	public sndBell;
+	public sndBump;
+	public sndPop;
+	public sndClick;
+	public sndHole;
+	public sndDie;
+	public sndPasslane;
+	public sndTada;
+	public sndJackpot;
+	public sndSad;
+	public sndGameover;
+	public sndBgmusic;
+
+	public stayatholeinterval = 50;
 
 	constructor(
 		id: string,
@@ -70,19 +86,7 @@ export class Txpinball extends Entity {
 		let gravity   = new b2Vec2(0, -8.5);
         this.world     = new b2World( gravity );
 
-        let boxwidth = 4;
-        let boxheight = 6;
-        let boxborder = 0.1;
-
-       	//this.createStaticBox(  0.0,  0.0 , boxwidth , boxborder , this.world );
-    	//this.createStaticBox( -boxwidth/2,  boxheight/2 , boxborder ,  boxheight, this.world );
-		//this.createStaticBox(  boxwidth/2,  boxheight/2 , boxborder ,  boxheight, this.world );
-    	//this.createStaticBox( -1.78 , 0.3  , 0.4, 0.4 , this.world );
-		//this.createStaticBox(  1.34 , 0.3  , 0.4, 0.4 , this.world );
-		//this.createStaticBox( -1.78 , 5.8  , 0.4, 0.4 , this.world );
-		//this.createStaticBox(  1.78 , 5.8  , 0.4, 0.4 , this.world );
-				    		
-
+        
 		let machine_entity = new Entity();
 		machine_entity.setParent( this );
 		
@@ -108,15 +112,8 @@ export class Txpinball extends Entity {
 		this.place_box2d_sensors();
 		this.place_lights()
 
-		this.ball_box2dbody = this.createDynamicCircle(  
-    				this.ball_start_x ,  
-    				this.ball_start_y ,  
-    				0.08 , this.world, true );
+			
 
-
-		let ball_entity = new Entity();
-		ball_entity.setParent( this );
-		engine.addEntity( ball_entity );
 
 
 		let ball_shape 		= new PlaneShape();
@@ -132,13 +129,6 @@ export class Txpinball extends Entity {
 			0,1
 		];
 
-
-		let ball_transform = new Transform( {
-			position: new Vector3( this.ball_start_x ,this.ball_start_y, -0.05),
-			scale   : new Vector3(0.20, 0.20,0.01)
-		});
-
-
 		let ball_material = new Material();
 		ball_material.albedoTexture = resources.textures.pinball;
 		ball_material.transparencyMode = 1;
@@ -147,15 +137,23 @@ export class Txpinball extends Entity {
 		ball_material.emissiveIntensity = 0.6;
 		ball_material.emissiveColor = Color3.Green();
 
+		let i;
+		for ( i = 0 ; i < this.ball_start_x.length ; i++ ) {
+			let ball = new Txball( this, 
+									this.ball_start_x[i],
+									this.ball_start_y[i],
+									ball_shape,
+									ball_material,
+									0.20,
+									this.world,
+									i );
+
+			this.balls.push( ball  );
+		}	
+
+
+
 		
-		ball_entity.addComponent( ball_shape );
-		ball_entity.addComponent( ball_transform );
-		ball_entity.addComponent( ball_material );
-		ball_entity.addComponent( new Billboard() );
-
-
-
-		this.ball_transform = ball_transform;
 
 		this.plunger_box = new Txbox( this, 1.54, 0.9 , 0.25,0.25 );
     	
@@ -182,12 +180,58 @@ export class Txpinball extends Entity {
 
 		contactListener.BeginContact = function (contact) {
 
-			if ( contact.GetFixtureA().GetBody().GetUserData() != null ) {
-				_this.toggleButton( contact.GetFixtureA().GetBody().GetUserData()  );
+			if ( contact.GetFixtureA().GetBody().GetUserData() != null  && contact.GetFixtureB().GetBody().GetUserData() != null ) {
+
+				let userdataA = contact.GetFixtureA().GetBody().GetUserData();
+				let userdataB = contact.GetFixtureB().GetBody().GetUserData();
+
+				if ( userdataA.substr(0,4) == "ball" ) {
+				
+					let ball_id = parseInt( userdataA.substr(4,2) );
+					let ball    = _this.balls[ball_id] ;
+
+					_this.toggleButton( userdataB , ball );
+
+				} else if ( userdataB.substr(0,4) == "ball") {
+					
+					let ball_id = parseInt( userdataB.substr(4,2) );
+					let ball    = _this.balls[ball_id] ;
+					_this.toggleButton( userdataA , ball );
+				
+				}
+
+			} else if ( contact.GetFixtureA().GetBody().GetUserData() != null  || contact.GetFixtureB().GetBody().GetUserData() != null ) {
+				
+				let userdataA = contact.GetFixtureA().GetBody().GetUserData();
+				let userdataB = contact.GetFixtureB().GetBody().GetUserData();
+				let fixtureA  = contact.GetFixtureA();
+				let fixtureB  = contact.GetFixtureB();
+
+				if ( userdataA != null && userdataA.substr(0,4) == "ball"  ) {
+
+					if ( fixtureB.GetRestitution() == 1.01 ) {
+
+						_this.sndBell.playOnce();
+
+					} else if ( fixtureB.GetRestitution() > 0.5 )  {
+
+						_this.sndBump.playOnce();
+					}
+
+
+				} else if ( userdataB != null && userdataB.substr(0,4) == "ball" ) {
+					if ( fixtureA.GetRestitution() == 1.01 ) {
+
+						_this.sndBell.playOnce();
+					
+					} else if ( fixtureA.GetRestitution() > 0.5 )  {
+
+						_this.sndBump.playOnce();
+					}
+							
+				}
 			}
-		  	if ( contact.GetFixtureB().GetBody().GetUserData() != null ) {
-		  		_this.toggleButton( contact.GetFixtureB().GetBody().GetUserData()  );
-		  	}
+		  	
 		  
 		}
 
@@ -205,9 +249,29 @@ export class Txpinball extends Entity {
 		this.world.SetContactListener(contactListener);	
 
 
-		
+		this.reset_all_board_state_for_newgame();	
+
+
+		this.sndFlipper = new Txsound( this, resources.sounds.flipper );
+		this.sndLaunch  = new Txsound( this, resources.sounds.launch );
+		this.sndBell    = new Txsound( this, resources.sounds.bell );
+		this.sndBump 	= new Txsound( this, resources.sounds.bump );
+		this.sndPop		= new Txsound( this, resources.sounds.pop );
+		this.sndClick   = new Txsound( this, resources.sounds.click );
+		this.sndHole    = new Txsound( this, resources.sounds.hole );
+		this.sndDie 	= new Txsound( this, resources.sounds.die );
+		this.sndPasslane = new Txsound( this, resources.sounds.passlane) ;
+		this.sndTada 	 = new Txsound( this, resources.sounds.tada );
+		this.sndJackpot 	= new Txsound(this, resources.sounds.jackpot );
+		this.sndSad 		= new Txsound(this, resources.sounds.sad );
+		this.sndGameover 	= new Txsound(this, resources.sounds.gameover );
+		this.sndBgmusic 	= new Txsound(this, resources.sounds.bgmusic );
+
+		this.sndBgmusic.playLoop();
 
     }    
+
+
 
 
 
@@ -236,11 +300,15 @@ export class Txpinball extends Entity {
 			
 			this.jointL.EnableMotor(true);
 
+			//this.releaseOtherBall();
+			this.sndFlipper.playOnce();
+
 				
     	} else if ( e.buttonId == 2 ) {
 
     		this.jointR.EnableMotor(true);
-
+    		this.sndFlipper.playOnce();
+			
     			
 			
     		
@@ -271,11 +339,15 @@ export class Txpinball extends Entity {
     		
     		log("Plunger on release");
     		this.plunger_on_pressed = false;
+    		this.sndLaunch.playOnce();
 
     	} else if ( e.buttonId == 1 ) {
 
 
     		this.jointL.EnableMotor(false);
+
+    		
+
     
     	} else if ( e.buttonId == 2 ) {
     		this.jointR.EnableMotor(false);
@@ -287,12 +359,7 @@ export class Txpinball extends Entity {
     	
     	this.world.Step( dt * 0.55  , 10, 10 );
     	
-    	this.ball_transform.position.x = this.ball_box2dbody.GetPosition().x;
-    	this.ball_transform.position.y = this.ball_box2dbody.GetPosition().y;
     	
-    	if ( this.ball_box2dbody.GetPosition().y < -1 ) {
-			this.ball_box2dbody.SetPosition( new b2Vec2( this.ball_start_x, this.ball_start_y ) );
-		}
 			
 		this.flipper_boxL.transform.rotation.eulerAngles = new Vector3(0,0, this.jointL.GetJointAngle() * 180.0 /Math.PI );
 		this.flipper_boxR.transform.rotation.eulerAngles = new Vector3(0,0, this.jointR.GetJointAngle() * 180.0 /Math.PI );
@@ -311,56 +378,90 @@ export class Txpinball extends Entity {
 		this.plunger_box.transform.position.x = this.plunger_top.GetPosition().x ;
 		this.plunger_box.transform.position.y = this.plunger_top.GetPosition().y ;
 
-		if ( this.sticker != ""  ) {
+		let b;
+		for ( b = 0 ; b < this.balls.length ; b++) {
 
-			if ( this.stickerCountdown > 0 ) {
+			let ball = this.balls[b];
+
+			ball.updatePosition_toBox2d();
+
+			if ( ball.sticker != ""  ) {
+
+				if ( ball.stickerCountdown > 0 ) {
+					
+					
+					ball.box2dbody.SetType( b2BodyType.b2_staticBody );
+					ball.box2dbody.SetAwake( true );
+
+					if ( ball.sticker == "at_cbonus" || ball.sticker == "at_tbonus" || ball.sticker == "at_lock" ) {
+						ball.box2dbody.SetPosition( this.sensors[ ball.sticker ].GetPosition() );
+						ball.transform.position.z = 0.02;
+						if ( ball.stickerCountdown == this.stayatholeinterval ) {
+							this.sndHole.playOnce();
+						}
+					}
+
+					ball.stickerCountdown -= 1;
 				
-				this.stickerCountdown -= 1;
-				this.ball_box2dbody.SetType( b2BodyType.b2_staticBody );
-				this.ball_box2dbody.SetAwake( true );
+				} else {
 
-				if ( this.sticker == "at_cbonus" || this.sticker == "at_tbonus" || this.sticker == "at_lock" ) {
-					this.ball_box2dbody.SetPosition( this.sensors[ this.sticker ].GetPosition() );
-					this.ball_transform.position.z = 0.02;
+					
+					ball.box2dbody.SetType( b2BodyType.b2_dynamicBody );
+					ball.box2dbody.SetAwake( true );
+					ball.transform.position.z = -0.05;
+					
+					if ( ball.sticker == "at_cbonus" ) { 
+						ball.box2dbody.ApplyLinearImpulse( new b2Vec2( 0.252, -0.3) , ball.box2dbody.GetWorldCenter(), true )
+						this.sndPop.playOnce();
+
+					}
+					if ( ball.sticker == "at_tbonus" ) { 
+						ball.box2dbody.ApplyLinearImpulse( new b2Vec2( -0.18, -0.3) , ball.box2dbody.GetWorldCenter() , true )
+						this.sndPop.playOnce();
+						
+					}
+					if ( ball.sticker == "at_lock" ) { 
+						ball.box2dbody.ApplyLinearImpulse( new b2Vec2( 0.1, -0.3) , ball.box2dbody.GetWorldCenter() , true )
+						this.sndPop.playOnce();
+						
+					}
+
+					if ( ball.sticker == "at_leftdrain" ) {
+						ball.box2dbody.ApplyLinearImpulse( new b2Vec2(  0.0,  0.15) , ball.box2dbody.GetWorldCenter() , true )
+						this.boardstates["has_leftouterdrain"] = 0;
+						this.lights["has_leftouterdrain"].turn_off();
+						this.sndPop.playOnce();
+						
+
+					}
+					if ( ball.sticker == "at_rightdrain" ) {
+						ball.box2dbody.ApplyLinearImpulse( new b2Vec2(  0.0,  0.13) , ball.box2dbody.GetWorldCenter() , true );
+						this.boardstates["has_rightouterdrain"] = 0;
+						this.lights["has_rightouterdrain"].turn_off();
+						this.sndPop.playOnce();
+						
+					}
+
+					ball.sticker = "";
+					ball.stickerCountdown = 50;
+					
+					
 				}
-			
 			} else {
-
-				
-				this.ball_box2dbody.SetType( b2BodyType.b2_dynamicBody );
-				this.ball_box2dbody.SetAwake( true );
-				this.ball_transform.position.z = -0.05;
-				
-				if ( this.sticker == "at_cbonus" ) { 
-					this.ball_box2dbody.ApplyLinearImpulse( new b2Vec2( 0.225, -0.3) , this.ball_box2dbody.GetWorldCenter(), true )
+				if ( ball.stickerCountdown > 0 ) {
+					ball.stickerCountdown -= 1;
 				}
-				if ( this.sticker == "at_tbonus" ) { 
-					this.ball_box2dbody.ApplyLinearImpulse( new b2Vec2( -0.18, -0.3) , this.ball_box2dbody.GetWorldCenter() , true )
-				}
-
-				if ( this.sticker == "at_leftdrain" ) {
-					this.ball_box2dbody.ApplyLinearImpulse( new b2Vec2(  0.0,  0.3) , this.ball_box2dbody.GetWorldCenter() , true )
-					this.boardstates["has_leftouterdrain"] = 0;
-					this.lights["has_leftouterdrain"].turn_off();
-
-				}
-				if ( this.sticker == "at_rightdrain" ) {
-					this.ball_box2dbody.ApplyLinearImpulse( new b2Vec2(  0.0,  0.3) , this.ball_box2dbody.GetWorldCenter() , true );
-					this.boardstates["has_rightouterdrain"] = 0;
-					this.lights["has_rightouterdrain"].turn_off();
-				}
-
-				this.sticker = "";
-				this.stickerCountdown = 50;
-				
-				
-			}
-		} else {
-			if ( this.stickerCountdown > 0 ) {
-				this.stickerCountdown -= 1;
 			}
 		}
-		
+
+		// Process fake setTimeout 
+		let i;
+		for ( i = this.callback_queue.length - 1 ; i >= 0 ;  i-- ) {
+			if ( this.callback_queue[i] == "releaseOtherBall" ) {
+				this.releaseOtherBall();
+				this.callback_queue.pop();
+			}
+		}
 
     }
 
@@ -371,6 +472,175 @@ export class Txpinball extends Entity {
     	this.step(dt);
 
     }
+
+
+
+
+    //-------------
+    ball_ondies( ball_id ) {
+    	
+    	let b;
+    	let other_liveball = 0;
+    	
+    	this.unlockBall();
+    	
+    	for ( b = 0 ; b < this.balls.length ; b++ ) {
+    		if ( b != ball_id && this.balls[b].visible == 1 ) {
+    			other_liveball += 1;
+    		}
+    	}
+
+    	// No other liveball
+    	if ( other_liveball == 0 ) {
+    		// We reset this ball back to live.
+			this.balls[ball_id].show(); 
+
+			// deduct extraball.
+			if ( this.boardstates["extraball"] != null && this.boardstates["extraball"] > 0 ) {
+				 this.boardstates["extraball"] -= 1;
+				 if ( this.boardstates["extraball"] == 0 ) {
+				 	this.lights["has_extraball"].turn_off();
+				 }
+			} else {
+				// No extraball advance ball index.
+				if ( this.boardstates["ball_index"] >= 3 ) {
+					this.gameover();	
+				} else {
+					this.reset_all_board_state_for_nextball();
+				}
+			}
+    	
+			this.sndSad.playOnce();
+
+    	} else {
+    		this.sndDie.playOnce();	
+    
+    	}
+
+    	this.boardstates["hastrig_jackpot"] = 0;
+		this.lights["hastrig_jackpot"].turn_off();
+			
+		
+    }
+
+
+    //-------
+    gameover() {
+
+    	log("Game OVER!");
+    	this.reset_all_board_state_for_newgame();
+    	this.sndGameover.playOnce();
+
+    }
+
+
+
+
+
+
+
+
+	public eb_tog_has_categories 		= ["tbonus" , "extraball"  , "lock" , "cbonus" , "doublescore"  ];
+	public eb_tog_has_ebcount    		= [        3,    		3  ,      3 ,       4   ,           3 ] ;
+	public eb_completion_prefix 		= [ "has"   , "hastrig"    , "has"  ,   "has"   ,      "has"       ];
+	public eb_completion_upgrade 		= ["magic"  , ""           , "drain"     , "cbonus"  ,  ""      ];
+	public eb_completion_upgrademax 	= [      4  ,            0 ,       0,        4  ,           0 ];
+	public eb_completion_upgrade2 		= ["jackpot", 			"", 	  "", 		 "", 			""];
+
+		
+
+
+
+
+
+
+    //------------
+    // Reset due to next ball
+    reset_all_board_state_for_nextball( ) {
+
+    	this.boardstates["ball_index"] += 1;
+
+    	log( "Current Ball", this.boardstates["ball_index"] );
+
+    	this.boardstates["has_lock"] = 0;
+		this.lights["has_lock"].turn_off();
+
+		this.boardstates["has_tbonus"] = 1;
+		this.lights["has_tbonus"].turn_on(); 
+
+		this.boardstates["has_cbonus"] = 0;
+		this.lights["has_cbonus"].turn_off(); 
+
+
+
+		this.boardstates["has_rightouterdrain"] = 1;
+		this.lights["has_rightouterdrain"].turn_on();
+
+		this.boardstates["has_leftouterdrain"] = 1;
+		this.lights["has_leftouterdrain"].turn_on();
+			
+		this.boardstates["has_rightinnerdrain"] = 1;
+		this.lights["has_rightinnerdrain"].turn_off();
+
+		this.boardstates["has_leftinnerdrain"] = 1;
+		this.lights["has_leftinnerdrain"].turn_off();
+
+
+		let i , h;
+		
+		for ( h = 0 ; h < this.eb_tog_has_categories.length ; h++ ) {
+
+			let category = this.eb_tog_has_categories[h];
+			let eb_count = this.eb_tog_has_ebcount[h];
+			
+			for ( i = 0 ; i < eb_count  ; i++ ) {
+				this.boardstates["eb_" + category +"_" + i] = 0;
+				this.lights["tog_" + category + "_" + i].turn_off();
+			}
+		}
+		
+		this.boardstates["magic"] = 0;
+		for ( i = 0 ; i < 5 ; i++ ) {
+			this.lights["mul_magic_" + i].turn_off();
+		}
+		
+		this.boardstates["cbonus"] = 0;
+		for ( i = 0 ; i < 4 ; i++ ) {
+			this.lights["mul_cbonus_" + i].turn_off();
+		}
+
+		
+		this.boardstates["hastrig_jackpot"] = 0;
+		this.lights["hastrig_jackpot"].turn_off();
+
+		//this.boardstates["hastrig_extraball"] = 0;
+		//this.lights["hastrig_extraball"].turn_off();
+
+		this.boardstates["hastrig_extraball"] = 1;
+		this.lights["hastrig_extraball"].turn_on();
+
+
+		this.boardstates["has_doublescore"] = 0;
+		this.lights["has_doublescore"].turn_off();
+
+		
+		// Give lane reward here...
+		this.boardstates["lanemul"] = 0; 
+		for ( i = 0 ; i < 7 ;i++ ) {
+			this.lights["mul_lane_" + i].turn_off();
+		}
+    }	
+
+
+
+    reset_all_board_state_for_newgame( ) {
+    	
+    	this.boardstates["ball_index"] = 0;
+    	this.reset_all_board_state_for_nextball();
+    	
+    }
+
+
 
 
     
@@ -534,26 +804,15 @@ export class Txpinball extends Entity {
 
 
 
-
-
-	public eb_tog_has_categories 		= ["tbonus" , "extraball"  , "lock" , "cbonus" , "doublescore"  ];
-	public eb_tog_has_ebcount    		= [        3,    		3  ,      3 ,       4   ,           3 ] ;
-	public eb_completion_prefix 		= [ "has"   , "hastrig"    , "has"  ,   "has"   ,      "has"       ];
-	public eb_completion_upgrade 		= ["magic"  , ""           , "drain"     , "cbonus"  ,  ""      ];
-	public eb_completion_upgrademax 	= [      4  ,            0 ,       0,        4  ,           0 ];
-	public eb_completion_upgrade2 		= ["jackpot", 			"", 	  "", 		 "", 			""];
-
-		
 	//----------
-	public toggleButton( buttonName ) {
+	public toggleButton( buttonName , ball ) {
 
 		let h , i  ;
 
 		if ( buttonName == "at_tbonus" || buttonName == "at_cbonus" || buttonName == "at_lock" || 
 			 buttonName == "at_leftdrain" || buttonName == "at_rightdrain" ) {
   			 
-			if ( this.stickerCountdown == 0 ) {
-				
+			if ( ball.stickerCountdown == 0 ) {
 				
 				let has_catch = 0;
 				if ( buttonName == "at_tbonus" || buttonName == "at_cbonus" || buttonName == "at_lock" ) {
@@ -569,8 +828,8 @@ export class Txpinball extends Entity {
 				if ( has_catch == 1 ) {
 					
 
-					let xdiff = this.sensors[buttonName].GetPosition().x - this.ball_box2dbody.GetPosition().x ;
-					let ydiff = this.sensors[buttonName].GetPosition().y - this.ball_box2dbody.GetPosition().y ;
+					let xdiff = this.sensors[buttonName].GetPosition().x - ball.box2dbody.GetPosition().x ;
+					let ydiff = this.sensors[buttonName].GetPosition().y - ball.box2dbody.GetPosition().y ;
 
 					let distance_sqr = xdiff * xdiff + ydiff * ydiff;
 					
@@ -585,13 +844,24 @@ export class Txpinball extends Entity {
 					if ( distance_sqr < hole_radius_sqr ) {
 
 						log("Masuk hole");
-						// Masuk hole
-						//_this.ball_box2dbody.SetType( b2BodyType.b2_staticBody );
-						//_this.ball_box2dbody.SetAwake( true );
 						var hole_id = buttonName;
-			  			this.sticker = hole_id;
-			  			this.stickerCountdown = 50;
+			  			
+			  			ball.sticker = hole_id;
+			  			ball.stickerCountdown = this.stayatholeinterval;
 		  				
+			  			if ( buttonName == "at_lock" && this.boardstates["has_lock"] == 1 && this.checkliveballcnt() < 2 ) {
+			  				ball.stickerCountdown = 9999999;
+			  				this.callback_queue.push( "releaseOtherBall" );
+			  			}
+			  			if ( buttonName == "at_tbonus" ) {
+			  				this.boardstates["has_tbonus"] = 0;
+			  				this.lights["has_tbonus"].turn_off();
+			  			}
+			  			if ( buttonName == "at_cbonus" ) {
+			  				this.boardstates["has_cbonus"] = 0;
+			  				this.lights["has_cbonus"].turn_off();
+			  			}
+
 	  				} 
   				}
   			}
@@ -608,9 +878,12 @@ export class Txpinball extends Entity {
 				if ( buttonName.substring(0,  ("eb_" + category ).length ) == "eb_" + category  ) {
 				
 					if ( this.boardstates[buttonName] != 1 ) {
+						
 						this.boardstates[buttonName] = 1;
 						let lightname = buttonName.replace("eb","tog");
-						this.lights[lightname].material.emissiveIntensity = 4.0;
+						this.lights[lightname].turn_on();
+
+						this.sndClick.playOnce();
 
 						let litcount = 0;
 						for ( i = 0 ; i < 3 ; i++ ) {
@@ -626,6 +899,7 @@ export class Txpinball extends Entity {
 						if ( litcount == 3 ) {
 							// all 3 eb_tbonus buttons are lit.
 							this.boardstates[ completion_prefix + "_" + category ] = 1;
+
 							this.lights[ completion_prefix + "_" + category ].turn_on();
 
 							// completion upgrade
@@ -662,6 +936,8 @@ export class Txpinball extends Entity {
 
 											log("Magic compleetion reward obtained!!");
 
+											this.sndJackpot.playOnce();
+
 											for ( i = 0 ; i < completion_upgrade_max ; i++ ) {
 												this.boardstates[completion_upgrade] = 0;
 												this.lights["mul_" + completion_upgrade +"_" + i].turn_off();
@@ -695,11 +971,17 @@ export class Txpinball extends Entity {
 
 				this.boardstates["hastrig_extraball"] = 0;
 				this.lights["hastrig_extraball"].turn_off();
+
+				this.sndTada.playOnce();
+
 			}
 
 			if ( buttonName == "at_jackpot" && this.boardstates["hastrig_jackpot"] == 1 ) {
 				
 				log("Jackpot obtained!!");
+				this.sndJackpot.playOnce();
+
+											
 				// Give 1 mill here..
 				this.boardstates["hastrig_jackpot"] = 0;
 				this.lights["hastrig_jackpot"].turn_off();
@@ -723,6 +1005,9 @@ export class Txpinball extends Entity {
 						break;
 					}
 				}
+				this.unlockBall();
+				this.sndPasslane.playOnce();
+
 			}
 
 			
@@ -758,6 +1043,53 @@ export class Txpinball extends Entity {
 
 
 
+	//----
+	public checkliveballcnt( ) {
+		let b;
+		let liveball_cnt = 0;
+		for ( b = 0 ; b < this.balls.length ; b++ ) {
+			if ( this.balls[b].visible == 1 ) {
+				liveball_cnt += 1;
+			}
+		}	
+		return liveball_cnt;
+	}
+
+
+	//------
+	public releaseOtherBall() {
+		let b;
+		for ( b = 0 ; b < this.balls.length ; b++ ) {
+			if ( this.balls[b].visible == 0 ) {
+				this.balls[b].show();
+			}
+		}
+
+	}
+	//---
+	public unlockBall() {
+		let b;
+		let liveball_cnt = 0;
+		for ( b = 0 ; b < this.balls.length ; b++ ) {
+			if ( this.balls[b].visible == 1 ) {
+				liveball_cnt += 1;
+				if ( this.balls[b].stickerCountdown > 10000 ) {
+					this.balls[b].stickerCountdown = 20;
+				}
+			}
+		}	
+
+		if ( liveball_cnt == 2 ) {
+			this.boardstates["hastrig_jackpot"] = 1;
+			this.lights["hastrig_jackpot"].turn_on();
+		}
+
+		this.boardstates["has_lock"] = 0;
+		this.lights["has_lock"].turn_off();
+
+	}
+
+
 
 	///-------------
 	public place_lights() {
@@ -765,7 +1097,7 @@ export class Txpinball extends Entity {
 		this.lights["has_lock"] = new Txlight( this , -0.935009 , 5.620511,  0.10 )
 		this.lights["has_lock"].material.emissiveColor = Color3.Green();
 
-
+		
 
 		this.lights["tog_doublescore_0"] = new Txlight( this , 0.120712 , 5.4428659999999995,  0.10 )
 		this.lights["tog_doublescore_1"] = new Txlight( this , 0.460777 , 5.361656,  0.10 )
@@ -813,13 +1145,7 @@ export class Txpinball extends Entity {
 		this.lights["has_rightinnerdrain"] = new Txlight( this , 1.017061 , 2.0696099999999997,  0.10 )
 		this.lights["has_rightouterdrain"] = new Txlight( this , 1.309415 , 1.8432600000000001,  0.10 )
 
-		this.boardstates["has_rightouterdrain"] = 1;
-		this.lights["has_rightouterdrain"].turn_on();
-
-		this.boardstates["has_leftouterdrain"] = 1;
-		this.lights["has_leftouterdrain"].turn_on();
-			
-
+		
 		this.lights["tog_extraball_0"] = new Txlight( this , -1.030662 , 5.334519,  0.10 )
 		this.lights["tog_extraball_1"] = new Txlight( this , -0.9460689999999999 , 5.161808,  0.10 )
 		this.lights["tog_extraball_2"] = new Txlight( this , -0.8614759999999999 , 4.974998,  0.10 )
@@ -1165,8 +1491,9 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(    0,  0.7) );
 
 
-		this.createStaticShape(  -1.28 + xoffset , 1.55 + yoffset , vertices, this.world  );	
-		
+		let bL = this.createStaticShape(  -1.28 + xoffset , 1.55 + yoffset , vertices, this.world  );	
+		bL.GetFixtureList().SetRestitution(1.0);
+
 
 		// Bumper Right
 		vertices.length = 0;
@@ -1177,8 +1504,9 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(    0,  0.22) );
 
 
-		this.createStaticShape(  0.5 + xoffset , 1.35 + yoffset , vertices, this.world  );	
-		
+		let bR = this.createStaticShape(  0.5 + xoffset , 1.35 + yoffset , vertices, this.world  );	
+		bR.GetFixtureList().SetRestitution(1.0);
+					
 
 
 
@@ -1338,8 +1666,9 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(  0.12 , 0.5   ) );
         vertices.push(  new b2Vec2(   0 ,  0.5  ) );
         	
-        this.createStaticShape( -2 + xoffset ,  3.28 + yoffset , vertices, this.world  );	
-		
+        let t1 = this.createStaticShape( -2 + xoffset ,  3.28 + yoffset , vertices, this.world  );	
+		t1.GetFixtureList().SetRestitution(1.2);
+						
 
         // trapezium on left
         vertices.length = 0;
@@ -1348,7 +1677,8 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(  0.12 , 0.5   ) );
         vertices.push(  new b2Vec2(  -0.04 ,  0.6  ) );
         	
-        this.createStaticShape( -1.84 + xoffset ,  2.38 + yoffset , vertices, this.world  );	
+        let t2 = this.createStaticShape( -1.84 + xoffset ,  2.38 + yoffset , vertices, this.world  );	
+		t2.GetFixtureList().SetRestitution(1.2);
 		
 
 
@@ -1360,8 +1690,8 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(  0.18 , 0.34   ) );
         vertices.push(  new b2Vec2(   0 ,  0.1  ) );
         	
-        this.createStaticShape( 1.24 + xoffset ,  2.70 + yoffset , vertices, this.world  );	
-		
+        let t3 = this.createStaticShape( 1.24 + xoffset ,  2.70 + yoffset , vertices, this.world  );	
+		t3.GetFixtureList().SetRestitution(1.2);
 
 		 // trapezium on inner right
         vertices.length = 0;
@@ -1370,8 +1700,8 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(  0.18 , 0.34   ) );
         vertices.push(  new b2Vec2(   0 ,  0.1  ) );
         	
-        this.createStaticShape( 1.32 + xoffset ,  4.24 + yoffset , vertices, this.world  );	
-		
+        let t4= this.createStaticShape( 1.32 + xoffset ,  4.24 + yoffset , vertices, this.world  );	
+		t4.GetFixtureList().SetRestitution(1.2);
 
 
 
@@ -1397,9 +1727,15 @@ export class Txpinball extends Entity {
 
         
         // Three circles in center
-        this.createStaticCircle( 0.04 + xoffset,  4.2  + yoffset , 0.18 , this.world );
-		this.createStaticCircle( -0.36 + xoffset,  4.74  + yoffset , 0.18 , this.world );
-		this.createStaticCircle( 0.71 + xoffset,  4.06  + yoffset , 0.18 , this.world );
+        
+        let c1 = this.createStaticCircle( 0.04 + xoffset,  4.2  + yoffset , 0.18 , this.world );
+		let c2 = this.createStaticCircle( -0.36 + xoffset,  4.74  + yoffset , 0.18 , this.world );
+		let c3 = this.createStaticCircle( 0.71 + xoffset,  4.06  + yoffset , 0.18 , this.world );
+
+		c1.GetFixtureList().SetRestitution(1.01);
+		c2.GetFixtureList().SetRestitution(1.01);
+		c3.GetFixtureList().SetRestitution(1.01);
+
 
 
 
@@ -1468,6 +1804,8 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(    0.54,   0.04   ) );
         vertices.push(  new b2Vec2(       0 ,  0.10  ) );
 		var flipperLeft = this.createDynamicShape( -0.76 + xoffset ,  0.85 + yoffset , vertices, this.world  );	
+		flipperLeft.GetFixtureList().SetRestitution(1.0);
+			
 
 		// Joint Left				
 		var jointL = this.createRevoluteJoint( flipperLParent , flipperLeft , 
@@ -1499,7 +1837,8 @@ export class Txpinball extends Entity {
         vertices.push(  new b2Vec2(   0.54,   0.16   ) );
         vertices.push(  new b2Vec2(   0 ,     0.04  ) );
 		var flipperRight = this.createDynamicShape( -0.06 + xoffset ,  0.84 + yoffset , vertices, this.world  );	
-
+		flipperRight.GetFixtureList().SetRestitution(1.0);
+		
 		// Joint right
 		var jointR = this.createRevoluteJoint( flipperRParent , flipperRight , 
 										new b2Vec2( 0.00 ,  0), 
