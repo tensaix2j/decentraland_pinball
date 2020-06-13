@@ -15,7 +15,9 @@ export default {
 		jackpot  : new AudioClip("sounds/jackpot.mp3"),
 		sad      : new AudioClip("sounds/sadtrombone.mp3"),
 		gameover : new AudioClip("sounds/gameover.mp3"),
-		bgmusic  : new AudioClip("sounds/bgmusic.mp3")
+		bgmusic  : new AudioClip("sounds/bgmusic.mp3"),
+		dramatic : new AudioClip("sounds/dramatic.mp3"),
+		completion: new AudioClip("sounds/completion.mp3")
 	},
 	
 	models: {

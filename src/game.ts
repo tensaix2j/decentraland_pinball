@@ -5,6 +5,8 @@ import { Txpinball }    from "src/gameObjects/txpinball";
 import { getUserData } from "@decentraland/Identity"
 import { UpdateSystem } from "src/updatesystem";
 import resources from "src/resources";
+import {Txsound} from "src/gameObjects/txsound"
+import {Utils} from "src/utils"
 
 
 //----------------------------
@@ -31,11 +33,13 @@ export class MainClass {
         const camera = Camera.instance;
         let tables = [];
 
+        
+
         var table = new Txpinball(
             "pb0",
             userID,
             {
-                    position: new Vector3( 5 , 0.5 , 5 ),
+                    position: new Vector3( 7 , 0.5 , 7 ),
                     scale: new Vector3( 0.5, 0.5, 0.5)
             }
         );    
@@ -74,6 +78,7 @@ export class MainClass {
             }
         });
 
+        
 
         // Add system to engine
         engine.addSystem(new UpdateSystem( tables , camera ))

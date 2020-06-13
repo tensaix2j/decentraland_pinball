@@ -13,6 +13,7 @@ export class Txbox extends Entity {
 	public parent;
 	public transform ;
 	public box_transform;
+	public box_material;
 
 	constructor( parent , x,y, width , height) {
 
@@ -41,9 +42,12 @@ export class Txbox extends Entity {
 			scale   : new Vector3( width , height , 0.05  )
 		}); 
 
+		this.box_material = new Material();
+		this.box_material.albedoColor = Color3.Yellow();
+
 		box_entity.addComponent( box_shape );
 		box_entity.addComponent( this.box_transform );	
-
+		box_entity.addComponent( this.box_material );
 
 	}
 

@@ -21,6 +21,7 @@ export class Txsound extends Entity {
 	
 	playOnce() {
 		this.sndClip.playOnce();
+		
 	}
 
 	playLoop() {
@@ -28,8 +29,17 @@ export class Txsound extends Entity {
 		this.sndClip.loop = true;
 	}
 
-	stopLoop() {
-		this.sndClip.playing = false;
+	playNoLoop() {
+		this.sndClip.playing = true;
 		this.sndClip.loop = false;
+	}
+
+
+	stopLoop() {
+		this.sndClip.loop = false;
+	}
+
+	stop() {
+		this.sndClip.playing = false;
 	}
 }
